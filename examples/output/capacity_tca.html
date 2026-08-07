@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>策略容量与交易成本分析（TCA）</title>
+<style>
+  :root {
+    --ground:#f6f3ec; --surface:#fffdf8; --surface-2:#f0ebe0;
+    --ink:#23201a; --ink-2:#6b655a; --ink-3:#9a9284;
+    --hair:rgba(35,32,26,.12); --hair-strong:rgba(35,32,26,.26);
+    --up:#c0392b; --down:#147d6f; --accent:#a9791f;
+    --accent-soft:rgba(169,121,31,.12); --faded:0.30;
+    --shadow:0 1px 2px rgba(35,32,26,.06),0 6px 20px rgba(35,32,26,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#17150f; --surface:#201d16; --surface-2:#2a261d;
+      --ink:#ece7db; --ink-2:#a9a293; --ink-3:#746d5e;
+      --hair:rgba(236,231,219,.12); --hair-strong:rgba(236,231,219,.24);
+      --up:#e15b4c; --down:#2aa697; --accent:#d6a94a;
+      --accent-soft:rgba(214,169,74,.14);
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 22px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",
+      "Segoe UI","Noto Sans CJK SC",system-ui,sans-serif;
+    line-height:1.6; font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:920px; margin:0 auto; padding:40px 24px 64px; }
+  .eyebrow { font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin:0 0 8px; }
+  h1 { font-size:clamp(24px,4vw,32px); font-weight:700; margin:0 0 6px;
+    letter-spacing:-.01em; text-wrap:balance; }
+  .meta { color:var(--ink-2); font-size:14px; margin:0; }
+  .meta b { color:var(--ink); font-weight:600; }
+  .warn { margin:16px 0 0; padding:10px 14px; border-radius:10px; font-size:13px;
+    background:rgba(192,57,43,.10); border:1px solid rgba(192,57,43,.30); color:var(--up); }
+  .callout { margin:24px 0 32px; padding:18px 20px; border-radius:12px;
+    background:var(--accent-soft); border:1px solid var(--hair);
+    display:flex; flex-wrap:wrap; gap:6px 28px; align-items:baseline; }
+  .callout .lead { font-weight:600; font-size:14px; color:var(--accent);
+    letter-spacing:.02em; width:100%; margin-bottom:2px; }
+  .callout .stat { font-size:14px; color:var(--ink-2); }
+  .callout .stat b { color:var(--ink); font-weight:700; font-size:16px; }
+  section { margin-top:40px; }
+  .sec-head { display:flex; align-items:baseline; justify-content:space-between;
+    gap:12px; margin-bottom:6px; flex-wrap:wrap; }
+  h2 { font-size:17px; font-weight:700; margin:0; letter-spacing:-.005em; }
+  .sec-note { font-size:13px; color:var(--ink-3); margin:0; }
+  .card { background:var(--surface); border:1px solid var(--hair); border-radius:14px;
+    box-shadow:var(--shadow); padding:20px 20px 12px; margin-top:14px; }
+  .chart-scroll { overflow-x:auto; }
+  svg { display:block; width:100%; min-width:480px; height:auto; }
+  .grid2 { display:grid; grid-template-columns:1fr; gap:16px; }
+  @media (min-width:720px) { .grid2 { grid-template-columns:1fr 1fr; } }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; margin-top:8px; }
+  th, td { text-align:right; padding:8px 10px; border-bottom:1px solid var(--hair); }
+  th:first-child, td:first-child { text-align:left; }
+  th { color:var(--ink-2); font-weight:600; font-size:12px; }
+  .caveats { margin:12px 0 0; padding-left:18px; color:var(--ink-2); font-size:13px; }
+  footer { margin-top:48px; padding-top:16px; border-top:1px solid var(--hair);
+    font-size:12px; color:var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">QuantSkills · Capacity &amp; TCA</p>
+  <h1>策略容量与交易成本分析（TCA）</h1>
+  <p class="meta">样本 <b>2023-01-03</b> → <b>2023-12-20</b> （≈0.96 年） &nbsp;·&nbsp; 成交 <b>756</b> &nbsp;·&nbsp; NAV <b>100,000,000</b></p>
+  <div class="warn">[!] 因缺失/无效 ADV 丢弃 1 笔成交</div>
+  <div class="callout"><span class="lead">基准规模 · 平方根冲击</span><span class="stat">均参与率 <b>5.91%</b></span><span class="stat">年化成本 <b>1.79%</b></span><span class="stat">线性对照 <b>0.45%</b></span><span class="stat">毛 α <b>5.00%</b></span><span class="stat">净 α <b>+3.21%</b></span><span class="stat">盈亏平衡 AUM <b>781,961,937</b></span></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>参与率分布</h2>
+      <p class="sec-note">|成交股数| / ADV</p>
+    </div>
+    <div class="card chart-scroll">
+      <svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="participation histogram"><line x1="48" y1="172" x2="624" y2="172" stroke="var(--hair-strong)"/><rect x="58.1" y="172.0" width="51.8" height="0.0" rx="3" fill="var(--accent)" opacity="0.85"/><text x="84.0" y="192" text-anchor="middle" font-size="10" fill="var(--ink-2)">0–1%</text><rect x="130.1" y="172.0" width="51.8" height="0.0" rx="3" fill="var(--accent)" opacity="0.85"/><text x="156.0" y="192" text-anchor="middle" font-size="10" fill="var(--ink-2)">1–2%</text><rect x="202.1" y="87.0" width="51.8" height="85.0" rx="3" fill="var(--accent)" opacity="0.85"/><text x="228.0" y="192" text-anchor="middle" font-size="10" fill="var(--ink-2)">2–5%</text><text x="228.0" y="83.0" text-anchor="middle" font-size="11" fill="var(--ink)" font-weight="600">261</text><rect x="274.1" y="16.0" width="51.8" height="156.0" rx="3" fill="var(--accent)" opacity="0.85"/><text x="300.0" y="192" text-anchor="middle" font-size="10" fill="var(--ink-2)">5–10%</text><text x="300.0" y="12.0" text-anchor="middle" font-size="11" fill="var(--ink)" font-weight="600">479</text><rect x="346.1" y="166.8" width="51.8" height="5.2" rx="3" fill="var(--accent)" opacity="0.85"/><text x="372.0" y="192" text-anchor="middle" font-size="10" fill="var(--ink-2)">10–20%</text><text x="372.0" y="162.8" text-anchor="middle" font-size="11" fill="var(--ink)" font-weight="600">16</text><rect x="418.1" y="172.0" width="51.8" height="0.0" rx="3" fill="var(--accent)" opacity="0.85"/><text x="444.0" y="192" text-anchor="middle" font-size="10" fill="var(--ink-2)">20–50%</text><rect x="490.1" y="172.0" width="51.8" height="0.0" rx="3" fill="var(--accent)" opacity="0.85"/><text x="516.0" y="192" text-anchor="middle" font-size="10" fill="var(--ink-2)">50–100%</text><rect x="562.1" y="172.0" width="51.8" height="0.0" rx="3" fill="var(--accent)" opacity="0.85"/><text x="588.0" y="192" text-anchor="middle" font-size="10" fill="var(--ink-2)">&gt;100%</text></svg>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>容量曲线</h2>
+      <p class="sec-note">年化平方根冲击成本 vs AUM（点线为 alpha）</p>
+    </div>
+    <div class="card chart-scroll">
+      <svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="capacity curve"><line x1="56" y1="216" x2="616" y2="216" stroke="var(--hair-strong)"/><line x1="56" y1="20" x2="56" y2="216" stroke="var(--hair-strong)"/><polyline fill="none" stroke="var(--accent)" stroke-width="2.2" points="56.0,186.7 168.0,174.6 280.0,157.5 392.0,133.2 504.0,99.0 616.0,50.5"/><circle cx="56.0" cy="186.7" r="4.5" fill="var(--accent)"/><circle cx="168.0" cy="174.6" r="4.5" fill="var(--accent)"/><circle cx="280.0" cy="157.5" r="4.5" fill="var(--accent)"/><circle cx="392.0" cy="133.2" r="4.5" fill="var(--accent)"/><circle cx="504.0" cy="99.0" r="4.5" fill="var(--accent)"/><circle cx="616.0" cy="50.5" r="4.5" fill="var(--accent)"/><line x1="56" y1="52.7" x2="616" y2="52.7" stroke="var(--up)" stroke-dasharray="6 4" stroke-width="1.5"/><text x="616" y="46.7" text-anchor="end" font-size="11" fill="var(--up)">alpha 5.0%</text><text x="56.0" y="246" text-anchor="middle" font-size="10" fill="var(--ink-2)">25M</text><text x="168.0" y="246" text-anchor="middle" font-size="10" fill="var(--ink-2)">50M</text><text x="280.0" y="246" text-anchor="middle" font-size="10" fill="var(--ink-2)">100M</text><text x="392.0" y="246" text-anchor="middle" font-size="10" fill="var(--ink-2)">200M</text><text x="504.0" y="246" text-anchor="middle" font-size="10" fill="var(--ink-2)">400M</text><text x="616.0" y="246" text-anchor="middle" font-size="10" fill="var(--ink-2)">800M</text><text x="12" y="28" font-size="10" fill="var(--ink-3)">cost</text><text x="336" y="258" text-anchor="middle" font-size="10" fill="var(--ink-3)">AUM</text></svg>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>容量表</h2></div>
+    <div class="card">
+      <table><thead><tr><th>倍数</th><th>AUM</th><th>均参与率</th><th>年化成本(√)</th><th>净α</th></tr></thead><tbody><tr><td>0.25×</td><td>25,000,000</td><td>1.48%</td><td>0.90%</td><td>+4.10%</td></tr><tr><td>0.50×</td><td>50,000,000</td><td>2.96%</td><td>1.27%</td><td>+3.73%</td></tr><tr><td>1.00×</td><td>100,000,000</td><td>5.91%</td><td>1.79%</td><td>+3.21%</td></tr><tr><td>2.00×</td><td>200,000,000</td><td>11.83%</td><td>2.53%</td><td>+2.47%</td></tr><tr><td>4.00×</td><td>400,000,000</td><td>23.65%</td><td>3.58%</td><td>+1.42%</td></tr><tr><td>8.00×</td><td>800,000,000</td><td>47.30%</td><td>5.07%</td><td>-0.07%</td></tr></tbody></table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>说明与边界</h2></div>
+    <ul class="caveats"><li>冲击成本模型（平方根/线性）是启发式估计，不是成交保证，也不是券商 TCA 实测。</li><li>默认日波动 σ=0.0200、系数=0.5；更换品种/市场须重标定。</li><li>容量曲线假设换手率随 AUM 同比放大且 ADV 不变——真实市场 ADV 会随规模变化。</li><li>本结果不构成投资建议或买卖指令，仅供研究与风控参考。</li><li>盈亏平衡相对用户给定毛 alpha=5.00%；净 alpha 尚须扣佣金、滑点、税费等。</li></ul>
+  </section>
+
+  <footer>冲击模型为启发式估计 · 非投资建议 · 自包含离线报告</footer>
+</div>
+</body>
+</html>

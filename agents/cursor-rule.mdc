@@ -1,0 +1,16 @@
+---
+description: Use strategy-capacity-tca to estimate ADV participation, market-impact cost, and strategy capacity curves from trades and ADV.
+alwaysApply: false
+---
+
+# Strategy Capacity & TCA
+
+When the user asks about strategy capacity, ADV participation, market impact,
+TCA-style cost estimates, capacity curves, or whether transaction costs eat
+alpha at larger AUM, read
+`.cursor/skills/strategy-capacity-tca/SKILL.md` and follow its workflow.
+
+Read `references/impact-models.md` for model assumptions and
+`references/source_boundary.md` for evidence limits. Use
+`scripts/capacity_tca.py` for deterministic calculations. Always separate data
+facts from model estimates; do not turn impact estimates into buy/sell advice.
